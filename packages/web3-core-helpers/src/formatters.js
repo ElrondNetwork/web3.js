@@ -146,9 +146,9 @@ var _txInputFormatter = function (options) {
         delete options.input;
     }
 
-    if (options.data && !utils.isHex(options.data)) {
-        throw new Error('The data field must be HEX encoded data.');
-    }
+    // if (options.data && !utils.isHex(options.data)) {
+    //     throw new Error('The data field must be HEX encoded data.');
+    // }
 
     // allow both
     if (options.gas || options.gasLimit) {

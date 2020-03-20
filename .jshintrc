@@ -1,5 +1,6 @@
 {
     "browserify": true,
+    "moz" : true,
     "bitwise": true,
     "camelcase": true,
     "eqeqeq": true,

@@ -496,45 +496,69 @@ Contract.prototype._decodeEventABI = function (data) {
  * @param {String} the encoded ABI
  */
 Contract.prototype._encodeMethodABI = function _encodeMethodABI() {
-    var methodSignature = this._method.signature,
-        args = this.arguments || [];
+    // var methodSignature = this._method.signature,
+    //     args = this.arguments || [];
+    //
+    // var signature = false,
+    //     paramsABI = this._parent.options.jsonInterface.filter(function (json) {
+    //         return ((methodSignature === 'constructor' && json.type === methodSignature) ||
+    //             ((json.signature === methodSignature || json.signature === methodSignature.replace('0x','') || json.name === methodSignature) && json.type === 'function'));
+    //     }).map(function (json) {
+    //         var inputLength = (_.isArray(json.inputs)) ? json.inputs.length : 0;
+    //
+    //         if (inputLength !== args.length) {
+    //             throw new Error('The number of arguments is not matching the methods required number. You need to pass '+ inputLength +' arguments.');
+    //         }
+    //
+    //         if (json.type === 'function') {
+    //             signature = json.signature;
+    //         }
+    //         return _.isArray(json.inputs) ? json.inputs : [];
+    //     }).map(function (inputs) {
+    //         return abi.encodeParameters(inputs, args).replace('0x','');
+    //     })[0] || '';
+    //
+    // // return constructor
+    // if(methodSignature === 'constructor') {
+    //     if(!this._deployData)
+    //         throw new Error('The contract has no contract data option set. This is necessary to append the constructor parameters.');
+    //
+    //     return this._deployData + paramsABI;
+    //
+    // }
+    //
+    // // return method
+    // var returnValue = (signature) ? signature + paramsABI : paramsABI;
+    //
+    // if(!returnValue) {
+    //     throw new Error('Couldn\'t find a matching contract method named "'+ this._method.name +'".');
+    //}
 
-    var signature = false,
-        paramsABI = this._parent.options.jsonInterface.filter(function (json) {
-            return ((methodSignature === 'constructor' && json.type === methodSignature) ||
-                ((json.signature === methodSignature || json.signature === methodSignature.replace('0x','') || json.name === methodSignature) && json.type === 'function'));
-        }).map(function (json) {
-            var inputLength = (_.isArray(json.inputs)) ? json.inputs.length : 0;
+    var args = this.arguments || [];
 
-            if (inputLength !== args.length) {
-                throw new Error('The number of arguments is not matching the methods required number. You need to pass '+ inputLength +' arguments.');
-            }
+    var methodName = this._method.name;
 
-            if (json.type === 'function') {
-                signature = json.signature;
-            }
-            return _.isArray(json.inputs) ? json.inputs : [];
-        }).map(function (inputs) {
-            return abi.encodeParameters(inputs, args).replace('0x','');
-        })[0] || '';
+    methodName +="(";
 
-    // return constructor
-    if(methodSignature === 'constructor') {
-        if(!this._deployData)
-            throw new Error('The contract has no contract data option set. This is necessary to append the constructor parameters.');
-
-        return this._deployData + paramsABI;
-
+    var index;
+    for (index = 0; index < this._method.inputs.length; index++) {
+        methodName += this._method.inputs[index].type + ",";
+        if (index === this._method.inputs.length -1 ) {
+            methodName = methodName.slice(0, -1);
+        }
     }
 
-    // return method
-    var returnValue = (signature) ? signature + paramsABI : paramsABI;
+    methodName +=")";
 
-    if(!returnValue) {
-        throw new Error('Couldn\'t find a matching contract method named "'+ this._method.name +'".');
-    }
 
-    return returnValue;
+    var encodedArgs = "";
+    args.forEach( function(arg) {
+        if (typeof arg === 'string' || typeof arg === 'number') {
+            encodedArgs += "@" + utils.toHex(arg).slice(2);
+        }
+    });
+
+    return methodName + encodedArgs;
 };
 
 

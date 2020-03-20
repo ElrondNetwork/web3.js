@@ -87,10 +87,10 @@ var toTwosComplement = function (number) {
  */
 var isAddress = function (address) {
     // check if it has the basic requirements of an address
-    if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) {
+    if (!/^(0x)?[0-9a-f]{64}$/i.test(address)) {
         return false;
         // If it's ALL lowercase or ALL upppercase
-    } else if (/^(0x|0X)?[0-9a-f]{40}$/.test(address) || /^(0x|0X)?[0-9A-F]{40}$/.test(address)) {
+    } else if (/^(0x|0X)?[0-9a-f]{64}$/.test(address) || /^(0x|0X)?[0-9A-F]{64}$/.test(address)) {
         return true;
         // Otherwise check each case
     } else {
@@ -401,7 +401,7 @@ var isBloom = function (bloom) {
 };
 
 /**
- * Returns true if the ethereum users address is part of the given bloom 
+ * Returns true if the ethereum users address is part of the given bloom
  * note: false positives are possible.
  *
  * @method isUserEthereumAddressInBloom
@@ -414,7 +414,7 @@ var isUserEthereumAddressInBloom = function (bloom, ethereumAddress) {
 };
 
 /**
- * Returns true if the contract address is part of the given bloom 
+ * Returns true if the contract address is part of the given bloom
  * note: false positives are possible.
  *
  * @method isUserEthereumAddressInBloom
