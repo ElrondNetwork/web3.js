@@ -33,9 +33,8 @@ var cryp = (typeof global === 'undefined') ? require('crypto-browserify') : requ
 var scrypt = require('@web3-js/scrypt-shim');
 var uuid = require('uuid');
 var utils = require('web3-utils');
-var helpers = require('web3-core-helpers');
-var Transaction = require('ethereumjs-tx').Transaction;
-var Common = require('ethereumjs-common').default;
+
+const elrondCoreJs = require('@elrondnetwork/elrond-core-js');
 
 
 var isNot = function(value) {
@@ -96,187 +95,109 @@ var Accounts = function Accounts() {
     this.wallet = new Wallet(this);
 };
 
-Accounts.prototype._addAccountFunctions = function(account) {
-    var _this = this;
+function convertEthTxToElrondTx(txObj) {
+    const from = txObj.from.slice(2);
+    const to = txObj.to.slice(2);
+    const nonce = parseInt(txObj.nonce.slice(2));
+    const value = txObj.value.slice(2);
+    const gas = utils.toDecimal(txObj.gas);
+    const gasPrice = utils.toDecimal(txObj.gasPrice);
+
+    return  new elrondCoreJs.transaction(nonce, from, to, value, gasPrice, gas, txObj.data);
+}
+
+Accounts.prototype._addAccountFunctions = function(sk) {
+    const hexSk = Buffer.from(sk, 'base64').toString();
+    const hexPrivate = Buffer.from(hexSk, 'hex');
+    const acct = new elrondCoreJs.account();
+
+    acct.loadFromSeed(hexPrivate);
+
+    const account ={
+        address: "0x" + acct.publicKeyAsString(),
+        privateKey: "0x" +acct.privateKeyAsString(),
+    };
+
+   // var _this = this;
 
     // add sign functions
-    account.signTransaction = function signTransaction(tx, callback) {
-        return _this.signTransaction(tx, account.privateKey, callback);
-    };
-    account.sign = function sign(data) {
-        return _this.sign(data, account.privateKey);
+    // account.signTransaction = function signTransaction(tx, callback) {
+    //     return _this.signTransaction(tx, account.privateKey, callback);
+    // };
+    // account.sign = function sign(data) {
+    //     return _this.sign(data, account.privateKey);
+    // };
+    //
+    // account.encrypt = function encrypt(password, options) {
+    //     return _this.encrypt(account.privateKey, password, options);
+    // };
+
+
+
+    account.signTransaction = function signTransaction(tx) {
+        const elrondTx = convertEthTxToElrondTx(tx);
+
+        elrondTx.signature = account.sign(elrondTx.prepareForSigning());
+        elrondTx.nonce = elrondTx.nonce.toString();
+        elrondTx.gasPrice = elrondTx.gasPrice.toString();
+        elrondTx.gasLimit = elrondTx.gasLimit.toString();
+
+        return elrondTx;
     };
 
-    account.encrypt = function encrypt(password, options) {
-        return _this.encrypt(account.privateKey, password, options);
-    };
 
 
     return account;
 };
 
-Accounts.prototype.create = function create(entropy) {
-    return this._addAccountFunctions(Account.create(entropy || utils.randomHex(32)));
+Accounts.prototype.create = function create(pk) {
+    return this._addAccountFunctions(pk || utils.randomHex(32));
 };
 
 Accounts.prototype.privateKeyToAccount = function privateKeyToAccount(privateKey, ignoreLength) {
-    if (!privateKey.startsWith('0x')) {
-        privateKey = '0x' + privateKey;
-    }
-
     // 64 hex characters + hex-prefix
-    if (!ignoreLength && privateKey.length !== 66) {
-        throw new Error("Private key must be 32 bytes long");
-    }
+    // if (!ignoreLength && privateKey.length !== 88) {
+    //     console.log(privateKey.length);
+    //     throw new Error("Private key must be 32 bytes long");
+    // }
 
-    return this._addAccountFunctions(Account.fromPrivate(privateKey));
+    return this._addAccountFunctions(privateKey);
 };
 
 Accounts.prototype.signTransaction = function signTransaction(tx, privateKey, callback) {
-    var _this = this,
-        error = false,
-        transactionOptions = {},
-        hasTxSigningOptions = !!(tx && ((tx.chain && tx.hardfork) || tx.common));
+    var _this = this;
 
     callback = callback || function() {
     };
 
-    if (!tx) {
-        error = new Error('No transaction object given!');
-
-        callback(error);
-        return Promise.reject(error);
-    }
-
-    function signed(tx) {
-        if (tx.common && (tx.chain && tx.hardfork)) {
-            error = new Error(
-                'Please provide the ethereumjs-common object or the chain and hardfork property but not all together.'
-            );
-        }
-
-        if ((tx.chain && !tx.hardfork) || (tx.hardfork && !tx.chain)) {
-            error = new Error(
-                'When specifying chain and hardfork, both values must be defined. ' +
-                'Received "chain": ' + tx.chain + ', "hardfork": ' + tx.hardfork
-            );
-        }
-
-        if (!tx.gas && !tx.gasLimit) {
-            error = new Error('"gas" is missing');
-        }
-
-        if (tx.nonce < 0 ||
-            tx.gas < 0 ||
-            tx.gasPrice < 0 ||
-            tx.chainId < 0) {
-            error = new Error('Gas, gasPrice, nonce or chainId is lower than 0');
-        }
-
-        if (error) {
-            callback(error);
-            return Promise.reject(error);
-        }
-
-        try {
-            var transaction = helpers.formatters.inputCallFormatter(_.clone(tx));
-            transaction.to = transaction.to || '0x';
-            transaction.data = transaction.data || '0x';
-            transaction.value = transaction.value || '0x';
-            transaction.chainId = utils.numberToHex(transaction.chainId);
-
-            // Because tx has no ethereumjs-tx signing options we use fetched vals.
-            if (!hasTxSigningOptions) {
-                transactionOptions.common = Common.forCustomChain(
-                    'mainnet',
-                    {
-                        name: 'custom-network',
-                        networkId: transaction.networkId,
-                        chainId: transaction.chainId
-                    },
-                    'petersburg'
-                );
-
-                delete transaction.networkId;
-            } else {
-                if (transaction.common) {
-                    transactionOptions.common = Common.forCustomChain(
-                        transaction.common.baseChain || 'mainnet',
-                        {
-                            name: transaction.common.customChain.name || 'custom-network',
-                            networkId: transaction.common.customChain.networkId,
-                            chainId: transaction.common.customChain.chainId
-                        },
-                        transaction.common.hardfork || 'petersburg'
-                    );
-
-                    delete transaction.common;
-                }
-
-                if (transaction.chain) {
-                    transactionOptions.chain = transaction.chain;
-                    delete transaction.chain;
-                }
-
-                if (transaction.hardfork) {
-                    transactionOptions.hardfork = transaction.hardfork;
-                    delete transaction.hardfork;
-                }
-            }
-
-            if (privateKey.startsWith('0x')) {
-                privateKey = privateKey.substring(2);
-            }
-
-            var ethTx = new Transaction(transaction, transactionOptions);
-
-            ethTx.sign(Buffer.from(privateKey, 'hex'));
-
-            var validationResult = ethTx.validate(true);
-
-            if (validationResult !== '') {
-                throw new Error('Signer Error: ' + validationResult);
-            }
-
-            var rlpEncoded = ethTx.serialize().toString('hex');
-            var rawTransaction = '0x' + rlpEncoded;
-            var transactionHash = utils.keccak256(rawTransaction);
-
-            var result = {
-                messageHash: '0x' + Buffer.from(ethTx.hash(false)).toString('hex'),
-                v: '0x' + Buffer.from(ethTx.v).toString('hex'),
-                r: '0x' + Buffer.from(ethTx.r).toString('hex'),
-                s: '0x' + Buffer.from(ethTx.s).toString('hex'),
-                rawTransaction: rawTransaction,
-                transactionHash: transactionHash
-            };
-
-            callback(null, result);
-            return result;
-
-        } catch (e) {
-            callback(e);
-            return Promise.reject(e);
-        }
-    }
+    const acct = new elrondCoreJs.account();
+    const pk = privateKey.slice(2);
+    acct.loadFromHexPrivateKey(pk);
 
 
-    // Resolve immediately if nonce, chainId, price and signing options are provided
-    if (tx.nonce !== undefined && tx.chainId !== undefined && tx.gasPrice !== undefined && hasTxSigningOptions) {
-        return Promise.resolve(signed(tx));
-    }
-
-    // Otherwise, get the missing info from the Ethereum Node
     return Promise.all([
-        isNot(tx.chainId) ? _this._ethereumCall.getChainId() : tx.chainId,
+        isNot(tx.from) ? "0x" + acct.publicKeyAsString() : tx.from,
+        isNot(tx.value) ? utils.toHex(0): tx.value,
         isNot(tx.gasPrice) ? _this._ethereumCall.getGasPrice() : tx.gasPrice,
-        isNot(tx.nonce) ? _this._ethereumCall.getTransactionCount(_this.privateKeyToAccount(privateKey).address) : tx.nonce,
-        isNot(hasTxSigningOptions) ? _this._ethereumCall.getNetworkId() : 1
+        isNot(tx.nonce) ? _this._ethereumCall.getTransactionCount(acct.publicKeyAsString()) : tx.nonce,
     ]).then(function(args) {
         if (isNot(args[0]) || isNot(args[1]) || isNot(args[2]) || isNot(args[3])) {
-            throw new Error('One of the values "chainId", "networkId", "gasPrice", or "nonce" couldn\'t be fetched: ' + JSON.stringify(args));
+            throw new Error('One of the values "from", "value", "gasPrice", or "nonce" couldn\'t be fetched: ' + JSON.stringify(args));
         }
-        return signed(_.extend(tx, {chainId: args[0], gasPrice: args[1], nonce: args[2], networkId: args[3]}));
+
+        tx = _.extend(tx, {from: args[0], value: args[1], gasPrice: args[2], nonce: args[3]});
+
+        const elrondTx = convertEthTxToElrondTx(tx);
+
+        elrondTx.signature = acct.sign(elrondTx.prepareForSigning());
+        elrondTx.nonce = elrondTx.nonce.toString();
+        elrondTx.gasPrice = utils.toDecimal(elrondTx.gasPrice).toString();
+        elrondTx.gasLimit = utils.toDecimal(elrondTx.gasLimit).toString();
+
+        callback(null, elrondTx);
+        return {
+            rawTransaction: elrondTx,
+        };
     });
 };
 
@@ -491,7 +412,6 @@ Wallet.prototype.add = function(account) {
         account = this._accounts.privateKeyToAccount(account);
     }
     if (!this[account.address]) {
-        account = this._accounts.privateKeyToAccount(account.privateKey);
         account.index = this._findSafeIndex();
 
         this[account.index] = account;

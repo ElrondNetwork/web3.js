@@ -14,6 +14,7 @@
     "nonew": true,
     "unused": true,
     "undef": true,
+    "esversion": 8,
     "predef": [
         "console"
     ]
