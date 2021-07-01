@@ -148,6 +148,7 @@ describe('ens', function () {
         });
 
         it('should set the owner record for a name', async function () {
+            this.timeout(10000);
             const signature = 'setOwner(bytes32,address)';
 
             prepareProviderForSetter(
@@ -1345,7 +1346,7 @@ describe('ens', function () {
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
 
-            const owner = await web3.eth.ens.registry.owner('foobar.eth');
+            const owner = await web3.eth.ens.registry.getOwner('foobar.eth');
 
             assert.equal(owner, '0x0123456701234567012345670123456701234567');
         });
@@ -1482,7 +1483,7 @@ describe('ens', function () {
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
 
-            const resolver = await web3.eth.ens.resolver('foobar.eth');
+            const resolver = await web3.eth.ens.getResolver('foobar.eth');
 
             assert.equal(resolver.options.address, '0x0123456701234567012345670123456701234567');
         });
@@ -1500,7 +1501,7 @@ describe('ens', function () {
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
 
-            web3.eth.ens.resolver('foobar.eth', function (error, resolver) {
+            web3.eth.ens.getResolver('foobar.eth', function (error, resolver) {
                 assert.equal(resolver.options.address, '0x0123456701234567012345670123456701234567');
                 assert.equal(error.options.address, '0x0123456701234567012345670123456701234567'); // For backward compatibility
 
@@ -1613,6 +1614,7 @@ describe('ens', function () {
         it('should call getAddress and return the expected address (promise)', async function () {
             const resolverSig = 'resolver(bytes32)';
             const addrSig = 'addr(bytes32)';
+            const addrInterfaceId = "3b3b57de";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1623,6 +1625,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + addrInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1642,6 +1654,7 @@ describe('ens', function () {
         it('should call getAddress and return the expected address (callback)', function (done) {
             const resolverSig = 'resolver(bytes32)';
             const addrSig = 'addr(bytes32)';
+            const addrInterfaceId = "3b3b57de";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1652,6 +1665,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + addrInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1674,6 +1697,7 @@ describe('ens', function () {
         it('should call getAddress and throw the expected error (promise)', async function () {
             const resolverSig = 'resolver(bytes32)';
             const addrSig = 'addr(bytes32)';
+            const addrInterfaceId = "3b3b57de";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1689,11 +1713,22 @@ describe('ens', function () {
                 assert.equal(payload.jsonrpc, '2.0');
                 assert.equal(payload.method, 'eth_call');
                 assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + addrInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
                     data: sha3(addrSig).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
                     to: '0x0123456701234567012345670123456701234567',
                 }, 'latest']);
             });
 
+            provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
@@ -1718,6 +1753,7 @@ describe('ens', function () {
         it('should call getAddress and throw the expected error (callback)', function (done) {
             const resolverSig = 'resolver(bytes32)';
             const addrSig = 'addr(bytes32)';
+            const addrInterfaceId = "3b3b57de";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1733,11 +1769,22 @@ describe('ens', function () {
                 assert.equal(payload.jsonrpc, '2.0');
                 assert.equal(payload.method, 'eth_call');
                 assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + addrInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
                     data: sha3(addrSig).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
                     to: '0x0123456701234567012345670123456701234567',
                 }, 'latest']);
             });
 
+            provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
@@ -1760,6 +1807,7 @@ describe('ens', function () {
         it('should call getPubkey and return the expected X and Y value (promise)', async function () {
             const resolverSignature = 'resolver(bytes32)';
             const pubkeySignature = 'pubkey(bytes32)';
+            const pubkeyInterfaceId = "c8690233";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1770,6 +1818,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + pubkeyInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1795,6 +1853,7 @@ describe('ens', function () {
         it('should call getPubkey and return the expected X and Y value (callback)', function (done) {
             const resolverSignature = 'resolver(bytes32)';
             const pubkeySignature = 'pubkey(bytes32)';
+            const pubkeyInterfaceId = "c8690233";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1805,6 +1864,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + pubkeyInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1838,6 +1907,7 @@ describe('ens', function () {
         it('should call getPubkey and throw the expected error (callback)', function (done) {
             const resolverSignature = 'resolver(bytes32)';
             const pubkeySignature = 'pubkey(bytes32)';
+            const pubkeyInterfaceId = "c8690233";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1848,6 +1918,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + pubkeyInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1864,6 +1944,7 @@ describe('ens', function () {
                 pubkeyCoordinateAsHex
             ]);
 
+            provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
@@ -1889,6 +1970,7 @@ describe('ens', function () {
         it('should call getPubkey and throw the expected error (promise)', async function () {
             const resolverSignature = 'resolver(bytes32)';
             const pubkeySignature = 'pubkey(bytes32)';
+            const pubkeyInterfaceId = "c8690233";
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1899,6 +1981,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + pubkeyInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1915,6 +2007,7 @@ describe('ens', function () {
                 pubkeyCoordinateAsHex
             ]);
 
+            provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
@@ -1938,6 +2031,7 @@ describe('ens', function () {
         it('should call getContent and return the expected content of the resolver (promise)', async function () {
             const resolverSignature = 'resolver(bytes32)';
             const contentSignature = 'content(bytes32)';
+            const contentInterfaceId = 'd8389dc5';
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1948,6 +2042,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contentInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1968,6 +2072,7 @@ describe('ens', function () {
         it('should call getContent and return the expected content of the resolver (callback)', function () {
             const resolverSignature = 'resolver(bytes32)';
             const contentSignature = 'content(bytes32)';
+            const contentInterfaceId = 'd8389dc5';
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -1978,6 +2083,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contentInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -2003,6 +2118,7 @@ describe('ens', function () {
         it('should call getContent and throw the expected error (promise)', async function () {
             const resolverSignature = 'resolver(bytes32)';
             const contentSignature = 'content(bytes32)';
+            const contentInterfaceId = 'd8389dc5';
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -2018,11 +2134,22 @@ describe('ens', function () {
                 assert.equal(payload.jsonrpc, '2.0');
                 assert.equal(payload.method, 'eth_call');
                 assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contentInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
                     data: sha3(contentSignature).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
                     to: '0x0123456701234567012345670123456701234567',
                 }, 'latest']);
             });
 
+            provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
@@ -2046,6 +2173,7 @@ describe('ens', function () {
         it('should call getContent and throw the expected error (callback)', function () {
             const resolverSignature = 'resolver(bytes32)';
             const contentSignature = 'content(bytes32)';
+            const contentInterfaceId = 'd8389dc5';
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -2056,6 +2184,16 @@ describe('ens', function () {
                 }, 'latest']);
             });
             provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contentInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000001');
 
             provider.injectValidation(function (payload) {
                 assert.equal(payload.jsonrpc, '2.0');
@@ -2072,6 +2210,7 @@ describe('ens', function () {
             provider.error.push(null);
             provider.error.push(null);
             provider.error.push(null);
+            provider.error.push(null);
 
             provider.injectError({
                 code: 1234,
@@ -2084,6 +2223,153 @@ describe('ens', function () {
                     assert.equal(error.code, 1234);
                     assert.equal(error.message, 'ERROR');
                     assert.equal(result, null);
+                }
+            );
+        });
+
+        it('should error if resolver ABI does not support contenthash (promise)', async function () {
+            const resolverSignature = 'resolver(bytes32)';
+            const contentSignature = 'contenthash(bytes32)';
+            const contenthashInterfaceId = 'bc1c58d1';
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3(resolverSignature).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
+                    to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contenthashInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000000');
+
+            try {
+                await web3.eth.ens.getContenthash('foobar.eth');
+
+                assert.fail();
+            } catch (error) {
+                assert(error.message.includes('does not implement requested method: "contenthash"'));
+            }
+        });
+
+        it('should error if resolver ABI does not support contenthash (callback)', function (done) {
+            const resolverSignature = 'resolver(bytes32)';
+            const contentSignature = 'contenthash(bytes32)';
+            const contenthashInterfaceId = 'bc1c58d1';
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3(resolverSignature).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
+                    to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contenthashInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000000');
+
+            web3.eth.ens.getContenthash(
+                'foobar.eth',
+                function (error, result) {
+                    assert(error.message.includes('does not implement requested method: "contenthash"'));
+                    assert.equal(result, null);
+                    done();
+                }
+            );
+        });
+
+        it('should error if resolver ABI does not support setContenthash (promise)', async function () {
+            const resolverSignature = 'resolver(bytes32)';
+            const contentSignature = 'setContenthash(bytes32)';
+            const contenthashInterfaceId = 'bc1c58d1';
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3(resolverSignature).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
+                    to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contenthashInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000000');
+
+            try {
+                await web3.eth.ens.setContenthash(
+                    'foobar.eth',
+                    'ipfs://QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn'
+                );
+
+                assert.fail();
+            } catch (error) {
+                assert(error.message.includes('does not implement requested method: "setContenthash"'));
+            }
+        });
+
+        it('should error if resolver ABI does not support setContenthash (callback)', function (done) {
+            const resolverSignature = 'resolver(bytes32)';
+            const contentSignature = 'setContenthash(bytes32)';
+            const contenthashInterfaceId = 'bc1c58d1';
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3(resolverSignature).slice(0, 10) + '1757b5941987904c18c7594de32c1726cda093fdddacb738cfbc4a7cd1ef4370',
+                    to: '0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000123456701234567012345670123456701234567');
+
+            provider.injectValidation(function (payload) {
+                assert.equal(payload.jsonrpc, '2.0');
+                assert.equal(payload.method, 'eth_call');
+                assert.deepEqual(payload.params, [{
+                    data: sha3('supportsInterface(bytes4)').slice(0, 10) + contenthashInterfaceId + '00000000000000000000000000000000000000000000000000000000',
+                    to: '0x0123456701234567012345670123456701234567',
+                }, 'latest']);
+            });
+            provider.injectResult('0x0000000000000000000000000000000000000000000000000000000000000000');
+
+            web3.eth.ens.setContenthash(
+                'foobar.eth',
+                'ipfs://QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn',
+                {
+                    from: '0x0123456701234567012345670123456701234567',
+                    gas: 4000000,
+                    gasPrice: 1
+                },
+                function (error, result) {
+                    assert(error.message.includes('does not implement requested method: "setContenthash"'));
+                    assert.equal(result, null);
+                    done();
                 }
             );
         });

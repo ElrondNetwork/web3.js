@@ -1,14 +1,13 @@
 <p align="center">
-<img src="https://github.com/ethereum/web3.js/raw/1.x/web3js.jpg" width=200 />
+  <img src="assets/logo/web3js.jpg" width="200" alt="web3.js" />
 </p>
 
 # web3.js - Ethereum JavaScript API
 
-[![Join the chat at https://gitter.im/ethereum/web3.js](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ethereum/web3.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)[![npm](https://img.shields.io/npm/dm/web3.svg)](https://www.npmjs.com/package/web3) [![Build Status][travis-image]][travis-url] [![dependency status][dep-image]][dep-url] [![dev dependency status][dep-dev-image]][dep-dev-url] [![Coverage Status][coveralls-image]][coveralls-url]
-[![lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
+[![Gitter][gitter-image]][gitter-url] [![StackExchange][stackexchange-image]][stackexchange-url] [![NPM Package Version][npm-image-version]][npm-url] [![NPM Package Downloads][npm-image-downloads]][npm-url] [![Build Status][actions-image]][actions-url] [![Dev Dependency Status][deps-dev-image]][deps-dev-url] [![Coverage Status][coveralls-image]][coveralls-url] [![Lerna][lerna-image]][lerna-url] [![Netlify Status][netlify-image]][netlify-url]
 
 This is the Ethereum [JavaScript API][docs]
-which connects to the [Generic JSON RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC) spec.
+which connects to the [Generic JSON-RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC) spec.
 
 You need to run a local or remote [Ethereum](https://www.ethereum.org/) node to use this library.
 
@@ -28,43 +27,37 @@ npm install web3
 yarn add web3
 ```
 
-### Meteor
-
-_Note_: works only in the Browser for now. (PR welcome).
-
-```bash
-meteor add ethereum:web3
-```
-
 ### In the Browser
 
-Use the prebuild `dist/web3.min.js`, or
+Use the prebuilt `dist/web3.min.js`, or
 build using the [web3.js][repo] repository:
 
 ```bash
-npm run-script build
+npm run build
 ```
 
-Then include `dist/web3.js` in your html file.
+Then include `dist/web3.min.js` in your html file.
 This will expose `Web3` on the window object.
 
-Or via jsDelivr CDN
+Or via jsDelivr CDN:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 ```
-UNPKG
+
+UNPKG:
 
 ```html
 <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script>
 ```
+
 ## Usage
 
 ```js
-// in node.js
-var Web3 = require('web3');
+// In Node.js
+const Web3 = require('web3');
 
-var web3 = new Web3('ws://localhost:8546');
+let web3 = new Web3('ws://localhost:8546');
 console.log(web3);
 > {
     eth: ... ,
@@ -99,7 +92,7 @@ import Web3 from 'web3';
 const web3 = new Web3('ws://localhost:8546');
 ```
 
-If you are using the types in a `commonjs` module like for example a node app you just have to enable `esModuleInterop` in your `tsconfig` compile option, also enable `allowSyntheticDefaultImports` for typesystem compatibility:
+If you are using the types in a `commonjs` module, like in a Node app, you just have to enable `esModuleInterop` and `allowSyntheticDefaultImports` in your `tsconfig` for typesystem compatibility:
 
 ```js
 "compilerOptions": {
@@ -108,9 +101,18 @@ If you are using the types in a `commonjs` module like for example a node app yo
     ....
 ```
 
+## Trouble shooting and known issues.
+
+### Web3 and Angular
+If you are using Ionic/Angular at a version >5 you may run into a build error in which modules `crypto` and `stream` are `undefined`
+
+a work around for this is to go into your node-modules and at `/angular-cli-files/models/webpack-configs/browser.js` change  the `node: false` to `node: {crypto: true, stream: true}` as mentioned [here](https://github.com/ethereum/web3.js/issues/2260#issuecomment-458519127)
+
+Another variation of this problem was an issue opned on angular-cli: https://github.com/angular/angular-cli/issues/1548
+
 ## Documentation
 
-Documentation can be found at [read the docs][docs].
+Documentation can be found at [ReadTheDocs][docs].
 
 ## Building
 
@@ -125,21 +127,13 @@ sudo apt-get install nodejs
 sudo apt-get install npm
 ```
 
-### Building (gulp)
+### Building (webpack)
 
-Build only the web3.js package
-
-```bash
-npm run-script build
-```
-
-Or build all sub packages as well:
+Build the web3.js package:
 
 ```bash
-npm run-script build-all
+npm run build
 ```
-
-This will put all the browser build files into the `dist` folder.
 
 ### Testing (mocha)
 
@@ -149,34 +143,49 @@ npm test
 
 ### Contributing
 
-The contribution guidelines are provided in [CONTRIBUTIONS](./CONTRIBUTIONS.md)
+Please follow the [Contribution Guidelines](./CONTRIBUTIONS.md) and [Review Guidelines](./REVIEW.md).
+
+This project adheres to the [Release Guidelines](./REVIEW.md).
 
 ### Community
 
--   [Gitter](https://gitter.im/ethereum/web3.js?source=orgpage)
--   [Forum](https://forum.ethereum.org/categories/ethereum-js)
+-   [Gitter][gitter-url]
+-   [StackExchange][stackexchange-url]
 
 ### Similar libraries in other languages
 
--   Python - [Web3.py](https://github.com/ethereum/web3.py)
--   Haskell - [hs-web3](https://github.com/airalab/hs-web3)
--   Java - [web3j](https://github.com/web3j/web3j)
--   Scala - [web3j-scala](https://github.com/mslinn/web3j-scala)
--   Purescript - [purescript-web3](https://github.com/f-o-a-m/purescript-web3)
--   PHP - [web3.php](https://github.com/sc0Vu/web3.php)
--   Ruby - [ethereum.rb](https://github.com/EthWorks/ethereum.rb)
+-   Haskell: [hs-web3](https://github.com/airalab/hs-web3)
+-   Java: [web3j](https://github.com/web3j/web3j)
+-   PHP: [web3.php](https://github.com/sc0Vu/web3.php)
+-   Purescript: [purescript-web3](https://github.com/f-o-a-m/purescript-web3)
+-   Python: [Web3.py](https://github.com/ethereum/web3.py)
+-   Ruby: [ethereum.rb](https://github.com/EthWorks/ethereum.rb)
+-   Scala: [web3j-scala](https://github.com/mslinn/web3j-scala)
 
 [repo]: https://github.com/ethereum/web3.js
 [docs]: http://web3js.readthedocs.io/
-[npm-image]: https://badge.fury.io/js/web3.png
+[npm-image-version]: https://img.shields.io/npm/v/web3.svg
+[npm-image-downloads]: https://img.shields.io/npm/dm/web3.svg
 [npm-url]: https://npmjs.org/package/web3
-[travis-image]: https://travis-ci.org/ethereum/web3.js.svg
-[travis-url]: https://travis-ci.org/ethereum/web3.js
-[dep-image]: https://david-dm.org/ethereum/web3.js.svg
-[dep-url]: https://david-dm.org/ethereum/web3.js
+[actions-image]: https://github.com/ethereum/web3.js/workflows/Build/badge.svg
+[actions-url]: https://github.com/ethereum/web3.js/actions
+[deps-dev-image]: https://david-dm.org/ethereum/web3.js/1.x/dev-status.svg
+[deps-dev-url]: https://david-dm.org/ethereum/web3.js/1.x?type=dev
 [dep-dev-image]: https://david-dm.org/ethereum/web3.js/dev-status.svg
 [dep-dev-url]: https://david-dm.org/ethereum/web3.js#info=devDependencies
 [coveralls-image]: https://coveralls.io/repos/ethereum/web3.js/badge.svg?branch=1.x
 [coveralls-url]: https://coveralls.io/r/ethereum/web3.js?branch=1.x
 [waffle-image]: https://badge.waffle.io/ethereum/web3.js.svg?label=ready&title=Ready
 [waffle-url]: https://waffle.io/ethereum/web3.js
+[gitter-image]: https://badges.gitter.im/Join%20Chat.svg
+[gitter-url]:  https://gitter.im/ethereum/web3.js
+[lerna-image]: https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg
+[lerna-url]: https://lerna.js.org/
+[netlify-image]: https://api.netlify.com/api/v1/badges/1fc64933-d170-4939-8bdb-508ecd205519/deploy-status
+[netlify-url]: https://app.netlify.com/sites/web3-staging/deploys
+[stackexchange-image]: https://img.shields.io/badge/web3js-stackexchange-brightgreen
+[stackexchange-url]: https://ethereum.stackexchange.com/questions/tagged/web3js
+
+## Semantic versioning
+
+This project follows [semver](https://semver.org/) as closely as possible **from version 1.3.0 onwards**. Earlier minor version bumps [might](https://github.com/ethereum/web3.js/issues/3758) have included breaking behavior changes.

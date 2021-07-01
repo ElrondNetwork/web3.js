@@ -25,7 +25,7 @@ Later, when we want to check if an element is in the set, we simply hash the ele
 
 **Real Life Example**
 
-A ethereum real life example in where this is useful is if you want to update a users balance on every new block so it stays as close to real time as possible. Without using a bloom filter on every new block you would have to force the balances even if that user may not of had any activity within that block. But if you use the logBlooms from the block you can test the bloom filter against the users ethereum address before you do any more slow operations, this will dramatically decrease the amount of calls you do as you will only be doing those extra operations if that ethereum address is within that block (minus the false positives outcome which will be negligible). This will be highly performant for your app.
+An ethereum real life example in where this is useful is if you want to update a users balance on every new block so it stays as close to real time as possible. Without using a bloom filter on every new block you would have to force the balances even if that user may not of had any activity within that block. But if you use the logBlooms from the block you can test the bloom filter against the users ethereum address before you do any more slow operations, this will dramatically decrease the amount of calls you do as you will only be doing those extra operations if that ethereum address is within that block (minus the false positives outcome which will be negligible). This will be highly performant for your app.
 
 ---------
 Functions
@@ -280,7 +280,7 @@ Example
     > "0xbc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a"
 
     web3.utils.sha3(234);
-    > null // can't calculate the has of a number
+    > null // can't calculate the hash of a number
 
     web3.utils.sha3(0xea); // same as above, just the HEX representation of the number
     > null
@@ -319,6 +319,8 @@ soliditySha3
 Will calculate the sha3 of given input parameters in the same way solidity would.
 This means arguments will be ABI converted and tightly packed before being hashed.
 
+.. warning:: This method poses a security risk where multiple inputs can compute to the same hash. Provided in the example code are multiple cases of this security risk
+
 ----------
 Parameters
 ----------
@@ -343,6 +345,20 @@ Example
 -------
 
 .. code-block:: javascript
+
+    // As a short example of the non-distinguished nature of
+    // Solidity tight-packing (which is why it is inappropriate
+    // for many things from a security point of view), consider
+    // the following examples are all equal, despite representing
+    // very different values and layouts.
+    web3.utils.soliditySha3('hello','world01')
+    // "0xfb0a9d38c4dc568cbd105866540986fabf3c08c1bfb78299ce21aa0e5c0c586b"
+    web3.utils.soliditySha3({type: 'string', value: 'helloworld'},{type: 'string', value: '01'})
+    // "0xfb0a9d38c4dc568cbd105866540986fabf3c08c1bfb78299ce21aa0e5c0c586b"
+    web3.utils.soliditySha3({type: 'string', value: 'hell'},{type: 'string', value: 'oworld'},{type: 'uint16', value: 0x3031})
+    // "0xfb0a9d38c4dc568cbd105866540986fabf3c08c1bfb78299ce21aa0e5c0c586b"
+    web3.utils.soliditySha3({type: 'uint96', value: '32309054545061485574011236401'})
+    // "0xfb0a9d38c4dc568cbd105866540986fabf3c08c1bfb78299ce21aa0e5c0c586b"
 
     web3.utils.soliditySha3('234564535', '0xfff23243', true, -10);
     // auto detects:        uint256,      bytes,     bool,   int256
@@ -666,6 +682,41 @@ Example
     web3.utils.toHex('I have 100€');
     > "0x49206861766520313030e282ac"
 
+------------------------------------------------------------------------------
+
+stripHexPrefix
+=====================
+
+.. code-block:: javascript
+    web3.utils.stripHexPrefix(str)
+Returns provided string without 0x prefix.
+
+----------
+Parameters
+----------
+
+1. ``str`` - ``string``:  Input string
+
+-------
+Returns
+-------
+
+``String``: The input string without 0x prefix.
+
+-------
+Example
+-------
+
+.. code-block:: javascript
+
+    web3.utils.stripHexPrefix('234');
+    > "234"
+
+    web3.utils.stripHexPrefix('0x234');
+    > "234"
+
+    web3.utils.stripHexPrefix(42);
+    > 42
 
 ------------------------------------------------------------------------------
 
@@ -1043,7 +1094,7 @@ toWei
 
 Converts any `ether value <http://ethdocs.org/en/latest/ether.html>`_ value into `wei <http://ethereum.stackexchange.com/questions/253/the-ether-denominations-are-called-finney-szabo-and-wei-what-who-are-these-na>`_.
 
-.. note:: "wei" are the smallest ethere unit, and you should always make calculations in wei and convert only for display reasons.
+.. note:: "wei" are the smallest ether unit, and you should always make calculations in wei and convert only for display reasons.
 
 ----------
 Parameters
@@ -1117,7 +1168,7 @@ fromWei
 
 Converts any `wei <http://ethereum.stackexchange.com/questions/253/the-ether-denominations-are-called-finney-szabo-and-wei-what-who-are-these-na>`_ value into a `ether value <http://ethdocs.org/en/latest/ether.html>`_.
 
-.. note:: "wei" are the smallest ethere unit, and you should always make calculations in wei and convert only for display reasons.
+.. note:: "wei" are the smallest ether unit, and you should always make calculations in wei and convert only for display reasons.
 
 ----------
 Parameters
@@ -1391,4 +1442,3 @@ Example
 
     web3.utils.toTwosComplement('-0x1');
     > "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-

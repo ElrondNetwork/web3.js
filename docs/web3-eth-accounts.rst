@@ -98,12 +98,18 @@ privateKeyToAccount
 
 Creates an account object from a private key.
 
+For more advanced hierarchial address derivation, see 
+[truffle-hd-wallet-provider](https://github.com/trufflesuite/truffle/tree/develop/packages/hdwallet-provider)
+package.
+
 ----------
 Parameters
 ----------
 
-1. ``privateKey`` - ``String``: The private key to convert.
-1. ``ignoreLength`` - ``Boolean``: If set to true does the ``privateKey`` length not get validated.
+1. ``privateKey`` - ``String``: The private key to import. This is 32 bytes of random data.
+If you are supplying a hexadecimal number, it must have `0x` prefix in order to be in line 
+with other Ethereum libraries.
+2. ``ignoreLength`` - ``Boolean``: If set to true does the ``privateKey`` length not get validated.
 
 -------
 Returns
@@ -149,17 +155,17 @@ Parameters
     - ``to`` - ``String``: (optional) The recevier of the transaction, can be empty when deploying a contract.
     - ``data`` - ``String``: (optional) The call data of the transaction, can be empty for simple value transfers.
     - ``value`` - ``String``: (optional) The value of the transaction in wei.
-    - ``gasPrice`` - ``String``: (optional) The gas price set by this transaction, if empty, it will use :ref:`web3.eth.gasPrice() <eth-gasprice>`
+    - ``gasPrice`` - ``String``: (optional) The gas price set by this transaction, if empty, it will use :ref:`web3.eth.getGasPrice() <eth-gasprice>`
     - ``gas`` - ``String``: The gas provided by the transaction.
     - ``chain`` - ``String``: (optional) Defaults to ``mainnet``.
-    - ``hardfork`` - ``String``: (optional) Defaults to ``petersburg``.
+    - ``hardfork`` - ``String``: (optional) Defaults to ``berlin``.
     - ``common`` - ``Object``: (optional) The common object
         - ``customChain`` - ``Object``: The custom chain properties
             - ``name`` - ``string``: (optional) The name of the chain
             - ``networkId`` - ``number``: Network ID of the custom chain
             - ``chainId`` - ``number``: Chain ID of the custom chain
         - ``baseChain`` - ``string``: (optional) ``mainnet``, ``goerli``, ``kovan``, ``rinkeby``, or ``ropsten``
-        - ``hardfork`` - ``string``: (optional) ``chainstart``, ``homestead``, ``dao``, ``tangerineWhistle``, ``spuriousDragon``, ``byzantium``, ``constantinople``, ``petersburg``, or ``istanbul``
+        - ``hardfork`` - ``string``: (optional) ``chainstart``, ``homestead``, ``dao``, ``tangerineWhistle``, ``spuriousDragon``, ``byzantium``, ``constantinople``, ``petersburg``, ``istanbul``, or ``berlin``
 2. ``privateKey`` - ``String``: The private key to sign with.
 3. ``callback`` - ``Function``: (optional) Optional callback, returns an error object as first parameter and the result as second.
 
@@ -536,7 +542,7 @@ Example
 
 
 ------------------------------------------------------------------------------
-.. _eth_accounts_wallet:
+.. _eth-accounts-wallet:
 
 wallet
 =====================

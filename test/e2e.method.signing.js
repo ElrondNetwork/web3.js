@@ -1,6 +1,4 @@
 var assert = require('assert');
-var EJSCommon = require('ethereumjs-common');
-var EJSTx = require('ethereumjs-tx');
 var Basic = require('./sources/Basic');
 var utils = require('./helpers/test.utils');
 var Web3 = utils.getWeb3();
@@ -223,7 +221,7 @@ describe('transaction and message signing [ @E2E ]', function() {
             await web3.eth.accounts.signTransaction(txObject, wallet[0].privateKey);
             assert.fail()
         } catch (err) {
-            assert(err.message.includes('gas limit is too low'));
+            assert(err.message.includes('gasLimit is too low'));
         }
     })
 
@@ -313,6 +311,35 @@ describe('transaction and message signing [ @E2E ]', function() {
         }
     });
 
+    it('sendSignedTransaction reverts with reason', async function(){
+        const data = instance
+            .methods
+            .reverts()
+            .encodeABI();
+
+        const source = wallet[0].address;
+        const txCount = await web3.eth.getTransactionCount(source);
+
+        const txObject = {
+            nonce:    web3.utils.toHex(txCount),
+            to:       instance.options.address,
+            gasLimit: web3.utils.toHex(400000),
+            gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')),
+            data: data
+        };
+
+        const signed = await web3.eth.accounts.signTransaction(txObject, wallet[0].privateKey);
+
+        web3.eth.handleRevert = true;
+        try {
+            await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            assert.fail();
+        } catch(err){
+            assert.equal(err.receipt.status, false);
+            assert.equal(err.reason, "REVERTED WITH REVERT");
+        }
+    });
+
     it('transactions sent with wallet error correctly (OOG)', function(done){
         const data = instance
             .methods
@@ -361,5 +388,30 @@ describe('transaction and message signing [ @E2E ]', function() {
         const recovered = await web3.eth.personal.ecRecover(message, signed.signature);
         assert.equal(wallet[0].address.toLowerCase(), recovered.toLowerCase());
     })
+
+    // Smoke test to validate browserify's buffer polyfills (feross/buffer@5)
+    // A companion regression test for Webpack & feross/buffer@4.9.2 exists at:
+    // test/eth.accounts.webpack.js
+    it("encrypt then decrypt wallet", function(done) {
+        this.timeout(20000);
+        try {
+            const password = "qwerty";
+            const addressFromWallet = wallet[0].address;
+
+            const keystore = wallet.encrypt(password);
+
+            // Wallet created w/ 10 accounts in before block
+            assert.equal(keystore.length, 10);
+
+            wallet.decrypt(keystore, password);
+            assert.equal(wallet.length, 10);
+
+            const addressFromKeystore = wallet[0].address;
+            assert.equal(addressFromKeystore, addressFromWallet);
+            done()
+        } catch(error) {
+            done(error)
+        }
+    });
 });
 
